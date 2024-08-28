@@ -53,30 +53,29 @@ struct Led {
 struct Button {
     // state variables
     uint8_t  pin;
-    bool     lastReading;
-    uint32_t lastDebounceTime;
-    uint16_t state;
+    bool     lastReading;       // Última lectura del pin (HIGH o LOW)
+    uint32_t lastDebounceTime;  // Último tiempo registrado para la eliminación de rebotes
+    uint16_t state;             // Estado del botón, que puede ser 0, 1, o valores intermedios
 
     // methods determining the logical state of the button
-    bool pressed()                { return state == 1; }
-    bool released()               { return state == 0xffff; }
-    bool held(uint16_t count = 0) { return state > 1 + count && state < 0xffff; }
+    bool pressed()                { return state == 1; }    // Devuelve verdadero si el botón está presionado
+    bool released()               { return state == 0xffff; }   // Devuelve verdadero si el botón está liberado
+    bool held(uint16_t count = 0) { return state > 1 + count && state < 0xffff; } // Devuelve verdadero si el botón está mantenido (presionado por más tiempo)
 
     // method for reading the physical state of the button
     void read() {
         // reads the voltage on the pin connected to the button
         bool reading = digitalRead(pin);
 
-        // if the logic level has changed since the last reading,
-        // we reset the timer which counts down the necessary time
-        // beyond which we can consider that the bouncing effect
-        // has passed.
+        // Si el nivel lógico ha cambiado desde la última lectura,
+        // se reinicia el temporizador que cuenta el tiempo necesario
+        // para considerar que el efecto de rebote ha pasado.
         if (reading != lastReading) {
             lastDebounceTime = millis();
         }
 
-        // from the moment we're out of the bouncing phase
-        // the actual status of the button can be determined
+        // Desde el momento en que estamos fuera de la fase de rebote,
+        // el estado actual del botón se puede determinar
         if (millis() - lastDebounceTime > DEBOUNCE_DELAY) {
             // don't forget that the read pin is pulled-up
             bool pressed = reading == LOW;
@@ -112,7 +111,7 @@ void initSPIFFS() {
   if (!SPIFFS.begin()) {
     Serial.println("Cannot mount SPIFFS volume...");
     while (1) {
-        onboard_led.on = millis() % 200 < 50;
+        onboard_led.on = millis() % 200 < 50; //La expresión millis() % 200 < 50 será true cuando el residuo de millis() dividido por 200 sea menor que 50. Esto ocurre durante los primeros 50 milisegundos de cada intervalo de 200 milisegundos.
         onboard_led.update();
     }
   }
